@@ -33,11 +33,13 @@
         :style="{ width: '150px', textAlign: 'center' }"
       >
         <template #body="slotProps">
-          <div class="flex gap-4 justify-center items-center w-full">
+          <div
+            :key="slotProps.data.id"
+            class="flex gap-4 justify-center items-center w-full"
+          >
             <!-- View Button -->
             <button
               v-if="onView"
-              class="p-button p-button-rounded p-button-info p-button-icon-only"
               @click="() => handleAction('view', slotProps.data)"
               title="Xem"
             >
@@ -47,7 +49,6 @@
             <!-- Delete Button -->
             <button
               v-if="onDelete"
-              class="p-button p-button-rounded p-button-danger p-button-icon-only"
               @click="() => handleAction('delete', slotProps.data)"
               title="Xóa"
             >
