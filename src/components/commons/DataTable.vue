@@ -4,12 +4,19 @@
       :value="rows"
       :paginator="pagination"
       :rows="rowsPerPage"
+      :rows-per-page-options="[5, 10, 20]"
       :sortable="sortable"
       :filterable="filterable"
       :striped-rows="true"
       :size="tableSize"
-      :rows-per-page-options="[5, 10, 20]"
+      :selection="selection"
+      selection-mode="checkbox"
+      @update:selection="handleSelectionUpdate"
     >
+      <!-- Checkbox for selection -->
+      <p-column selection-mode="multiple" headerStyle="width: 3rem"></p-column>
+
+      <!-- Render columns dynamically -->
       <template v-for="column in columns" :key="column.field">
         <p-column
           :field="column.field"
@@ -18,6 +25,37 @@
           :filter="column.filter || false"
         ></p-column>
       </template>
+
+      <!-- Add Action column if onView or onDelete are passed -->
+      <p-column
+        v-if="hasActions"
+        header="Hành động"
+        :style="{ width: '150px', textAlign: 'center' }"
+      >
+        <template #body="slotProps">
+          <div class="flex gap-4 justify-center items-center w-full">
+            <!-- View Button -->
+            <button
+              v-if="onView"
+              class="p-button p-button-rounded p-button-info p-button-icon-only"
+              @click="() => handleAction('view', slotProps.data)"
+              title="Xem"
+            >
+              <i class="pi pi-eye"></i>
+            </button>
+
+            <!-- Delete Button -->
+            <button
+              v-if="onDelete"
+              class="p-button p-button-rounded p-button-danger p-button-icon-only"
+              @click="() => handleAction('delete', slotProps.data)"
+              title="Xóa"
+            >
+              <i class="pi pi-trash"></i>
+            </button>
+          </div>
+        </template>
+      </p-column>
     </p-dataTable>
   </div>
 </template>
@@ -55,7 +93,37 @@ export default {
     },
     rowsPerPage: {
       type: Number,
-      default: 10,
+      default: 5,
+    },
+    onView: {
+      type: Function,
+      default: null,
+    },
+    onDelete: {
+      type: Function,
+      default: null,
+    },
+    selection: {
+      type: Array,
+      required: true, // Thay đổi: yêu cầu cha truyền xuống selection để đồng bộ
+    },
+  },
+  computed: {
+    hasActions() {
+      return !!this.onView || !!this.onDelete;
+    },
+  },
+  methods: {
+    handleAction(action, rowData) {
+      if (action === "view" && this.onView) {
+        this.onView(rowData);
+      } else if (action === "delete" && this.onDelete) {
+        this.onDelete(rowData);
+      }
+    },
+    handleSelectionUpdate(newSelection) {
+      console.log("DataTable selection updated:", newSelection);
+      this.$emit("update:selection", newSelection);
     },
   },
   data() {
@@ -65,5 +133,3 @@ export default {
   },
 };
 </script>
-
-<style></style>

@@ -1,9 +1,7 @@
 <template>
   <div class="flex">
-    <!-- Sidebar -->
     <Sidebar />
 
-    <!-- Main content -->
     <main class="flex-1 p-6">
       <h1 class="text-2xl font-bold mb-6">Lịch Sử Mượn Sách</h1>
       <DataTable
