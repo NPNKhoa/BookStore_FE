@@ -1,5 +1,5 @@
 <template>
-  <Dialog
+  <p-dialog
     :visible="visible"
     :header="header"
     :modal="true"
@@ -12,10 +12,14 @@
       <slot></slot>
     </div>
     <div class="mt-4 flex justify-end gap-2">
-      <Button label="Cancel" class="p-button-outlined" @click="handleCancel" />
-      <Button label="OK" class="p-button-primary" @click="handleOk" />
+      <p-button
+        label="Cancel"
+        class="p-button-outlined"
+        @click="handleCancel"
+      />
+      <p-button label="OK" class="p-button-primary" @click="handleOk" />
     </div>
-  </Dialog>
+  </p-dialog>
 </template>
 
 <script>
@@ -25,8 +29,8 @@ import Button from "primevue/button";
 export default {
   name: "ReusableModal",
   components: {
-    Dialog,
-    Button,
+    "p-dialog": Dialog,
+    "p-button": Button,
   },
   props: {
     visible: {
