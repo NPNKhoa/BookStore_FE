@@ -5,27 +5,17 @@
     <main
       class="flex flex-col gap-16 p-6 h-full overflow-auto no-scrollbar w-[80%]"
     >
-      <div class="flex justify-between items-start h-full">
-        <div class="bg-white p-6 rounded shadow-lg shadow-slate-400 w-1/4">
-          <h3 class="text-lg font-semibold">Số sách đang được mượn</h3>
-          <div class="flex items-center justify-between mt-8">
-            <span class="text-3xl font-bold">{{ borrowedBooks }}</span>
-            <p class="text-gray-400">Trên tổng số {{ totalBooks }} quyển</p>
-          </div>
-        </div>
-
-        <div
-          class="bg-white p-4 rounded shadow-lg shadow-slate-400 w-[70%] h-[30rem]"
-        >
-          <h3 class="text-lg font-semibold mb-4">Thống kê sách</h3>
-          <BarChartWrapper
-            :chart-data="chartData"
-            :chart-options="chartOptions"
-          />
-        </div>
+      <div
+        class="bg-white p-4 rounded shadow-lg shadow-slate-400 w-full mt-6 h-[30rem]"
+      >
+        <h3 class="text-lg font-semibold mb-4">Thống kê sách</h3>
+        <BarChartWrapper
+          :chart-data="chartData"
+          :chart-options="chartOptions"
+        />
       </div>
 
-      <div class="flex justify-between items-center">
+      <div class="flex justify-between items-start pb-10">
         <div class="bg-white p-4 rounded shadow-lg shadow-slate-400 w-[47%]">
           <h3 class="text-lg font-semibold mb-4">Top Độc Giả</h3>
           <DataTable
@@ -54,6 +44,7 @@
 import BarChartWrapper from "@/components/statistic/BarChartWrapper.vue";
 import DataTable from "@/components/commons/DataTable.vue";
 import SideBar from "@/components/commons/SideBar.vue";
+import statisticService from "@/services/statistic.service";
 
 export default {
   name: "StatisticView",
@@ -85,12 +76,12 @@ export default {
           {
             label: "Số sách đang được mượn",
             backgroundColor: "#42A5F5",
-            data: [5, 10, 15],
+            data: this.borrowingBooks,
           },
           {
             label: "Tổng số sách hiện có",
             backgroundColor: "#FF6384",
-            data: [10, 10, 10],
+            data: this.bookCount,
           },
         ],
       },
@@ -112,71 +103,70 @@ export default {
           },
         },
       },
-      topReaders: [
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-        { id: 1, name: "Nhà Xuất Bản Văn Học", borrowCount: 10 },
-      ],
+      topReaders: [],
       topReaderColumns: [
-        { field: "id", header: "ID" },
         { field: "name", header: "Tên Người Dùng" },
         { field: "borrowCount", header: "Số Lần Mượn Sách" },
       ],
-      topBooks: [
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-        {
-          id: 1,
-          name: "Hai số phận (bìa cứng)",
-          borrowCount: 20,
-        },
-      ],
+      topBooks: [],
       topBooksColumns: [
-        { field: "name", header: "Tên Sách" },
+        { field: "title", header: "Tên Sách" },
         {
           field: "borrowCount",
           header: "Số Lần Được Mượn",
         },
       ],
     };
+  },
+  methods: {
+    async getTopBooks() {
+      try {
+        const response = await statisticService.getTopBooks();
+
+        this.topBooks = response;
+      } catch (error) {
+        console.log(error);
+      }
+    },
+
+    async getTopReaders() {
+      const response = await statisticService.getTopReaders();
+
+      const readers = response.map((reader) => ({
+        ...reader,
+        name: `${reader.firstName} ${reader.lastName}`,
+      }));
+
+      this.topReaders = readers;
+    },
+
+    async getMonthlyStat() {
+      const response = await statisticService.getMonthlyStat();
+
+      const borrowingBooks = response.map((item) => item.borrowingBooks);
+      const bookCount = response.map((item) => item.bookCount);
+
+      this.chartData = {
+        ...this.chartData,
+        datasets: [
+          {
+            label: "Số sách đang được mượn",
+            backgroundColor: "#42A5F5",
+            data: borrowingBooks,
+          },
+          {
+            label: "Tổng số sách hiện có",
+            backgroundColor: "#FF6384",
+            data: bookCount,
+          },
+        ],
+      };
+    },
+  },
+  async created() {
+    await this.getTopBooks();
+    await this.getTopReaders();
+    await this.getMonthlyStat();
   },
 };
 </script>

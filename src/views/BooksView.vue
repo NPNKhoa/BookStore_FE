@@ -41,6 +41,7 @@
           @update:visible="isDetailModalVisible = $event"
         >
           <div class="flex flex-col gap-2 text-xl">
+            <p><strong>Id:</strong> {{ detailedBook.id }}</p>
             <p><strong>Tiêu đề:</strong> {{ detailedBook.title }}</p>
             <p><strong>Giá:</strong> {{ detailedBook.price }}</p>
             <p><strong>Số lượng:</strong> {{ detailedBook.quantity }}</p>
@@ -153,7 +154,6 @@ export default {
       books: [],
       publishers: [],
       columns: [
-        { field: "id", header: "ID", sortable: true },
         { field: "title", header: "Tên Sách", sortable: true, filter: true },
         { field: "author", header: "Tác Giả", sortable: true, filter: true },
         {
@@ -235,6 +235,7 @@ export default {
       try {
         const book = await bookService.get(id);
         this.detailedBook = {
+          id: book._id,
           title: book.title,
           price: ToVietnamCurrencyFormat(book.price),
           quantity: book.quantity,
