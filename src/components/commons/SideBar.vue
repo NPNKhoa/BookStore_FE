@@ -49,6 +49,7 @@ export default {
         { label: "Trang chủ", to: "/", icon: "pi pi-home" },
         { label: "Tra cứu sách", to: "/search", icon: "pi pi-search" },
         { label: "Quản lý sách", to: "/books", icon: "pi pi-book" },
+        { label: "Quản lý độc giả", to: "/readers", icon: "pi pi-user" },
         { label: "Thống kê", to: "/statistic", icon: "pi pi-chart-line" },
       ],
     };
