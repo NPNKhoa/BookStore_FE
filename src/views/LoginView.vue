@@ -14,11 +14,11 @@
         <form @submit.prevent="handleLogin">
           <div class="mb-4">
             <input
-              v-model="email"
-              type="email"
-              id="email"
+              v-model="phone"
+              type="phone"
+              id="phone"
               class="mt-1 block w-full border border-gray-300 rounded py-2 px-3 shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Email"
+              placeholder="Phone number"
               required
             />
           </div>
@@ -47,19 +47,33 @@
 </template>
 
 <script>
+import authService from "@/services/auth.service";
+
 export default {
   name: "LoginView",
   data() {
     return {
-      email: "",
+      phone: "",
       password: "",
     };
   },
   methods: {
-    handleLogin() {
-      console.log("Email:", this.email);
-      console.log("Password:", this.password);
-      alert("Đăng nhập thành công!");
+    async handleLogin() {
+      try {
+        const response = await authService.login({
+          phone: this.phone,
+          password: this.password,
+        });
+
+        localStorage.setItem("token", response.data.token);
+
+        alert("Đăng nhập thành công!");
+
+        this.$router.push("/");
+      } catch (error) {
+        console.log(error);
+        alert("Đăng nhập thất bại, vui lòng kiểm tra lại thông tin đăng nhập");
+      }
     },
   },
 };

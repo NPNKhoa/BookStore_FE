@@ -83,7 +83,7 @@ export default {
         ],
         datasets: [
           {
-            label: "Số sách người đang mượn",
+            label: "Số sách đang được mượn",
             backgroundColor: "#42A5F5",
             data: [5, 10, 15],
           },
