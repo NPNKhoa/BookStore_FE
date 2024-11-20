@@ -151,7 +151,7 @@ export default {
       searchQuery: "",
       selectedBooks: [],
       books: [],
-      publishers: [], // Store publisher data
+      publishers: [],
       columns: [
         { field: "id", header: "ID", sortable: true },
         { field: "title", header: "Tên Sách", sortable: true, filter: true },
@@ -216,16 +216,13 @@ export default {
     },
     async handleDelete(book) {
       try {
-        // Hiển thị xác nhận xóa
         const confirmDelete = confirm(
           `Bạn có chắc chắn muốn xóa sách "${book.title}" không?`
         );
         if (!confirmDelete) return;
 
-        // Gọi API xóa sách
         await bookService.delete(book.id);
 
-        // Cập nhật lại danh sách sách sau khi xóa
         this.books = this.books.filter((b) => b.id !== book.id);
 
         alert("Xóa sách thành công!");
@@ -277,7 +274,6 @@ export default {
       }
       this.modalHeader = "Chỉnh sửa sách";
 
-      // Lấy đầy đủ thông tin sách từ danh sách `books` dựa vào `id`
       const selectedBook = this.selectedBooks[0];
       const detailedBook = this.books.find(
         (book) => book.id === selectedBook.id
@@ -304,7 +300,6 @@ export default {
     async handleModalOk() {
       try {
         if (this.isEditing) {
-          // Khi cập nhật sách, không gửi `id` và `publisher`, chỉ gửi `publisherId`
           const { title, author, price, quantity, publishYear, publisherId } =
             this.currentBook;
 
@@ -317,7 +312,6 @@ export default {
             publisherId,
           });
 
-          // Cập nhật lại danh sách sách sau khi sửa
           await this.fetchBooks();
         } else {
           const createdBook = await bookService.create(this.currentBook);

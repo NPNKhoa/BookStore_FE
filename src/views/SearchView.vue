@@ -31,12 +31,39 @@
             }}</span>
           </template>
         </DataTable>
+
+        <CustomModal
+          :visible="isModalVisible"
+          header="Chi tiết sách"
+          :onCancel="handleModalCancel"
+          @update:visible="isModalVisible = $event"
+        >
+          <div class="flex flex-col gap-2 text-xl">
+            <p><strong>Tiêu đề:</strong> {{ detailedBook.title }}</p>
+            <p><strong>Giá:</strong> {{ detailedBook.price }}</p>
+            <p><strong>Số lượng:</strong> {{ detailedBook.quantity }}</p>
+            <p><strong>Năm xuất bản:</strong> {{ detailedBook.publishYear }}</p>
+            <p><strong>Nhà xuất bản:</strong> {{ detailedBook.publisher }}</p>
+            <p><strong>Tác giả:</strong> {{ detailedBook.author }}</p>
+            <p>
+              <strong>Trạng thái: </strong>
+              <span
+                :class="
+                  detailedBook.quantity > 0 ? 'text-green-500' : 'text-red-500'
+                "
+              >
+                {{ detailedBook.quantity > 0 ? "Còn sách" : "Hết sách" }}
+              </span>
+            </p>
+          </div>
+        </CustomModal>
       </div>
     </main>
   </div>
 </template>
 
 <script>
+import CustomModal from "@/components/commons/CustomModal.vue";
 import DataTable from "@/components/commons/DataTable.vue";
 import SideBar from "@/components/commons/SideBar.vue";
 import bookService from "@/services/book.service";
@@ -47,6 +74,7 @@ export default {
   components: {
     DataTable,
     SideBar,
+    CustomModal,
   },
   data() {
     return {
@@ -59,6 +87,8 @@ export default {
         { field: "price", header: "Giá mượn", sortable: true, filter: true },
         { field: "status", header: "Trạng Thái", sortable: true },
       ],
+      isModalVisible: false,
+      detailedBook: {},
     };
   },
   computed: {
@@ -97,12 +127,31 @@ export default {
         alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
       }
     },
+    async fetchBookDetails(id) {
+      try {
+        const book = await bookService.get(id);
+        this.detailedBook = {
+          title: book.title,
+          price: ToVietnamCurrencyFormat(book.price),
+          quantity: book.quantity,
+          publishYear: book.publishYear,
+          publisher: book.publisherId.publisherName,
+          author: book.author,
+        };
+      } catch (error) {
+        console.error("Error fetching book details:", error);
+        alert("Không thể xem chi tiết sách. Vui lòng thử lại sau.");
+      }
+    },
     onSearch() {
       console.log("Search query:", this.searchQuery);
     },
     handleView(book) {
-      console.log("View Book:", book);
-      alert(`Xem chi tiết: ${book.name}`);
+      this.isModalVisible = true;
+      this.fetchBookDetails(book.id);
+    },
+    handleModalCancel() {
+      this.isModalVisible = false;
     },
   },
   async created() {
