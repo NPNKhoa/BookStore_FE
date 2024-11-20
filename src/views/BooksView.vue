@@ -8,13 +8,13 @@
 
         <div class="flex justify-end gap-4 items-center w-1/4 ms-auto mb-4">
           <button
-            class="bg-green-500 px-3 py-2 rounded-md flex items-center gap-1"
+            class="bg-green-500 px-3 py-2 rounded-md flex items-center gap-1 text-white"
             @click="openAddBookModal"
           >
             <i class="pi pi-plus-circle"></i> Thêm mới sách
           </button>
           <button
-            class="bg-blue-500 px-3 py-2 rounded-md flex items-center gap-1"
+            class="bg-blue-500 px-3 py-2 rounded-md flex items-center gap-1 text-white"
             @click="openEditBookModal"
           >
             <i class="pi pi-pen-to-square"></i> Chỉnh sửa

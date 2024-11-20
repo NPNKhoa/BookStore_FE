@@ -34,7 +34,7 @@
       @click="signOut"
       class="bg-red-500 hover:bg-red-600 text-white py-2 rounded text-center w-full flex justify-center gap-2 items-center"
     >
-      Sign Out
+      Logout
       <i class="pi pi-sign-out"></i>
     </button>
   </aside>
@@ -57,7 +57,7 @@ export default {
     signOut() {
       console.log("Sign Out");
       localStorage.removeItem("token");
-      window.location.href("/login");
+      this.$router.push("/login");
     },
     isActive(route) {
       return this.$route.path === route;

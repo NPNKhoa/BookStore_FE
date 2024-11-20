@@ -30,14 +30,14 @@
         />
       </div>
 
-      <div class="mt-4">
+      <!-- <div class="mt-4">
         <h2 class="text-xl font-semibold">Sách đã chọn:</h2>
         <ul>
           <li v-for="book in selectedBooks" :key="book.id">
             {{ book.name }} - {{ book.author }}
           </li>
         </ul>
-      </div>
+      </div> -->
     </main>
   </div>
 </template>
