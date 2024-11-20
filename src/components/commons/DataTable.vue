@@ -27,7 +27,13 @@
           :header="column.header"
           :sortable="column.sortable || false"
           :filter="column.filter || false"
-        ></p-column>
+        >
+          <template #body="slotProps">
+            <slot :name="column.field" :data="slotProps.data">
+              {{ slotProps.data[column.field] }}
+            </slot>
+          </template>
+        </p-column>
       </template>
 
       <!-- Add Action column if onView or onDelete are passed -->

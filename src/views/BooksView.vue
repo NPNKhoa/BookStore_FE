@@ -102,6 +102,8 @@
 import DataTable from "@/components/commons/DataTable.vue";
 import SideBar from "@/components/commons/SideBar.vue";
 import CustomModal from "@/components/commons/CustomModal.vue";
+import { ToVietnamCurrencyFormat } from "@/utils/ConvertCurrency";
+import bookService from "@/services/book.service";
 
 export default {
   name: "SearchView",
@@ -114,39 +116,19 @@ export default {
     return {
       searchQuery: "",
       selectedBooks: [],
-      books: [
-        {
-          id: 1,
-          name: "Book 1",
-          author: "Author 1",
-          price: 100000,
-          quantity: 5,
-          borrowDate: "2024-11-01",
-        },
-        {
-          id: 2,
-          name: "Book 2",
-          author: "Author 2",
-          price: 150000,
-          quantity: 3,
-          borrowDate: "2024-11-05",
-        },
-        {
-          id: 3,
-          name: "Book 3",
-          author: "Author 3",
-          price: 200000,
-          quantity: 2,
-          borrowDate: "2024-11-10",
-        },
-      ],
+      books: [],
       columns: [
         { field: "id", header: "ID", sortable: true },
-        { field: "name", header: "Tên Sách", sortable: true, filter: true },
+        { field: "title", header: "Tên Sách", sortable: true, filter: true },
         { field: "author", header: "Tác Giả", sortable: true, filter: true },
+        {
+          field: "publisher",
+          header: "Nhà Xuất Bản",
+          sortable: true,
+          filter: true,
+        },
         { field: "price", header: "Đơn Giá", sortable: true },
         { field: "quantity", header: "Số Lượng", filter: true },
-        { field: "borrowDate", header: "Ngày mượn", sortable: true },
       ],
       isModalVisible: false,
       modalHeader: "",
@@ -159,13 +141,33 @@ export default {
       const query = this.searchQuery.toLowerCase();
       return this.books.filter((book) => {
         return (
-          book.name.toLowerCase().includes(query) ||
-          book.author.toLowerCase().includes(query)
+          book?.title?.toLowerCase()?.includes(query) ||
+          book?.author?.toLowerCase()?.includes(query)
         );
       });
     },
   },
   methods: {
+    async fetchBooks() {
+      try {
+        const response = await bookService.getAll();
+
+        const bookArray = response.map((item) => {
+          return {
+            id: item?._id,
+            title: item?.title,
+            author: item?.author,
+            publisher: item?.publisherId?.publisherName,
+            price: ToVietnamCurrencyFormat(item?.price),
+            quantity: item?.quantity,
+          };
+        });
+        this.books = bookArray;
+      } catch (error) {
+        console.error("Error fetching books:", error);
+        alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
+      }
+    },
     updateSelection(selection) {
       console.log("Selected books in SearchView:", selection);
       this.selectedBooks = selection;
@@ -221,6 +223,9 @@ export default {
     handleModalCancel() {
       this.isModalVisible = false;
     },
+  },
+  async created() {
+    await this.fetchBooks();
   },
 };
 </script>

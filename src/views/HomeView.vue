@@ -13,7 +13,7 @@
       </button>
 
       <DataTable
-        :rows="books"
+        :rows="records"
         :columns="columns"
         :sortable="true"
         :filterable="true"
@@ -69,7 +69,6 @@
               </select>
             </div>
 
-            <!-- Ngày mượn -->
             <div class="mb-4">
               <label
                 for="borrowDate"
@@ -86,7 +85,6 @@
               />
             </div>
 
-            <!-- Nút Submit và Hủy -->
             <div class="flex justify-end gap-2">
               <button
                 type="button"
@@ -112,6 +110,9 @@
 <script>
 import Sidebar from "@/components/commons/SideBar.vue";
 import DataTable from "@/components/commons/DataTable.vue";
+import formatDate from "@/utils/FormatDate";
+import borrowingRecordService from "@/services/borrowingRecord.service";
+import { ToVietnamCurrencyFormat } from "@/utils/ConvertCurrency";
 
 export default {
   name: "HomeView",
@@ -132,40 +133,42 @@ export default {
         { id: 2, name: "Độc giả 2" },
         { id: 3, name: "Độc giả 3" },
       ],
-      books: [
-        {
-          id: 1,
-          name: "Book 1",
-          author: "Author 1",
-          price: 100000,
-          quantity: 5,
-        },
-        {
-          id: 2,
-          name: "Book 2",
-          author: "Author 2",
-          price: 150000,
-          quantity: 3,
-        },
-        {
-          id: 3,
-          name: "Book 3",
-          author: "Author 3",
-          price: 200000,
-          quantity: 7,
-        },
-      ],
+      records: [],
       columns: [
-        { field: "id", header: "ID", sortable: true },
-        { field: "name", header: "Tên Sách", sortable: true, filter: true },
-        { field: "author", header: "Tác Giả", sortable: true, filter: true },
+        { field: "title", header: "Tên Sách", sortable: true, filter: true },
+        { field: "reader", header: "Người Mượn", sortable: true, filter: true },
         { field: "price", header: "Đơn Giá", sortable: true },
-        { field: "quantity", header: "Số Lượng", filter: true },
-        { field: "borrowDate", header: "Ngày mượn", sortable: true },
+        { field: "borrowDate", header: "Ngày Mượn", sortable: true },
+        { field: "returnDate", header: "Ngày Trả", sortable: true },
       ],
     };
   },
   methods: {
+    async fetchBooks() {
+      try {
+        const response = await borrowingRecordService.getAll();
+
+        const bookArray = response.map((item) => {
+          const returnDate = formatDate(item?.returnDate)
+            ? formatDate(item?.returnDate)
+            : "Chưa trả";
+
+          return {
+            id: item?.bookId?._id,
+            title: item?.bookId?.title,
+            reader: item?.readerId?.lastName,
+            price: ToVietnamCurrencyFormat(item?.bookId?.price),
+            borrowDate: formatDate(item?.borrowDate),
+            returnDate,
+          };
+        });
+
+        this.records = bookArray;
+      } catch (error) {
+        console.error("Error fetching books:", error);
+        alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
+      }
+    },
     openModal() {
       this.isModalOpen = true;
     },
@@ -185,6 +188,9 @@ export default {
       alert("Thuê sách thành công!");
       this.closeModal();
     },
+  },
+  async created() {
+    await this.fetchBooks();
   },
 };
 </script>
