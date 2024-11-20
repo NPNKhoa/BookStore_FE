@@ -59,6 +59,73 @@
             </p>
           </div>
         </CustomModal>
+
+        <!-- Modal Thêm sách -->
+        <CustomModal
+          :visible="isModalVisible"
+          :header="modalHeader"
+          :onOk="handleModalOk"
+          :onCancel="handleModalCancel"
+          @update:visible="isModalVisible = $event"
+        >
+          <form>
+            <div class="mb-4">
+              <label class="block font-medium">Tiêu đề</label>
+              <input
+                type="text"
+                v-model="currentBook.title"
+                class="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium">Tác giả</label>
+              <input
+                type="text"
+                v-model="currentBook.author"
+                class="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium">Giá</label>
+              <input
+                type="number"
+                v-model="currentBook.price"
+                class="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium">Số lượng</label>
+              <input
+                type="number"
+                v-model="currentBook.quantity"
+                class="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium">Năm xuất bản</label>
+              <input
+                type="number"
+                v-model="currentBook.publishYear"
+                class="w-full p-2 border border-gray-300 rounded"
+              />
+            </div>
+            <div class="mb-4">
+              <label class="block font-medium">Nhà xuất bản</label>
+              <select
+                v-model="currentBook.publisherId"
+                class="w-full p-2 border border-gray-300 rounded"
+              >
+                <option
+                  v-for="publisher in publishers"
+                  :key="publisher._id"
+                  :value="publisher._id"
+                >
+                  {{ publisher.publisherName }}
+                </option>
+              </select>
+            </div>
+          </form>
+        </CustomModal>
       </div>
     </main>
   </div>
@@ -70,6 +137,7 @@ import SideBar from "@/components/commons/SideBar.vue";
 import CustomModal from "@/components/commons/CustomModal.vue";
 import { ToVietnamCurrencyFormat } from "@/utils/ConvertCurrency";
 import bookService from "@/services/book.service";
+import publisherService from "@/services/publisher.service"; // Import publisher service
 
 export default {
   name: "BooksView",
@@ -83,6 +151,7 @@ export default {
       searchQuery: "",
       selectedBooks: [],
       books: [],
+      publishers: [], // Store publisher data
       columns: [
         { field: "id", header: "ID", sortable: true },
         { field: "title", header: "Tên Sách", sortable: true, filter: true },
@@ -119,25 +188,51 @@ export default {
     async fetchBooks() {
       try {
         const response = await bookService.getAll();
-
-        const bookArray = response.map((item) => {
-          return {
-            id: item?._id,
-            title: item?.title,
-            author: item?.author,
-            publisher: item?.publisherId?.publisherName,
-            price: ToVietnamCurrencyFormat(item?.price),
-            quantity: item?.quantity,
-          };
-        });
+        const bookArray = response.map((item) => ({
+          id: item?._id,
+          title: item?.title,
+          author: item?.author,
+          publisher: item?.publisherId?.publisherName,
+          price: ToVietnamCurrencyFormat(item?.price),
+          quantity: item?.quantity,
+        }));
         this.books = bookArray;
       } catch (error) {
         console.error("Error fetching books:", error);
         alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
       }
     },
+    async fetchPublishers() {
+      try {
+        const response = await publisherService.getAll();
+        this.publishers = response;
+      } catch (error) {
+        console.error("Error fetching publishers:", error);
+        alert("Không thể tải danh sách nhà xuất bản. Vui lòng thử lại sau.");
+      }
+    },
     handleView(book) {
       this.fetchBookDetails(book.id);
+    },
+    async handleDelete(book) {
+      try {
+        // Hiển thị xác nhận xóa
+        const confirmDelete = confirm(
+          `Bạn có chắc chắn muốn xóa sách "${book.title}" không?`
+        );
+        if (!confirmDelete) return;
+
+        // Gọi API xóa sách
+        await bookService.delete(book.id);
+
+        // Cập nhật lại danh sách sách sau khi xóa
+        this.books = this.books.filter((b) => b.id !== book.id);
+
+        alert("Xóa sách thành công!");
+      } catch (error) {
+        console.error("Error deleting book:", error);
+        alert("Không thể xóa sách. Vui lòng thử lại sau.");
+      }
     },
     async fetchBookDetails(id) {
       try {
@@ -161,17 +256,15 @@ export default {
     },
     createEmptyBook() {
       return {
-        id: null,
         title: "",
         author: "",
         price: null,
         quantity: null,
         publishYear: null,
-        publisher: "",
+        publisherId: null,
       };
     },
     openAddBookModal() {
-      console.log("ok");
       this.modalHeader = "Thêm mới sách";
       this.currentBook = this.createEmptyBook();
       this.isEditing = false;
@@ -183,21 +276,66 @@ export default {
         return;
       }
       this.modalHeader = "Chỉnh sửa sách";
-      this.currentBook = { ...this.selectedBooks[0] };
+
+      // Lấy đầy đủ thông tin sách từ danh sách `books` dựa vào `id`
+      const selectedBook = this.selectedBooks[0];
+      const detailedBook = this.books.find(
+        (book) => book.id === selectedBook.id
+      );
+
+      if (detailedBook) {
+        this.currentBook = {
+          title: detailedBook.title,
+          author: detailedBook.author,
+          price: Number(detailedBook.price.replace(/\D/g, "")), // Chuyển giá về số
+          quantity: detailedBook.quantity,
+          publishYear: detailedBook.publishYear,
+          publisherId: this.getPublisherIdByName(detailedBook.publisher), // Chuyển publisherName thành publisherId
+        };
+      }
+
       this.isEditing = true;
       this.isModalVisible = true;
     },
-    handleModalOk() {
-      if (this.isEditing) {
-        const index = this.books.findIndex(
-          (book) => book.id === this.currentBook.id
-        );
-        this.books[index] = { ...this.currentBook };
-      } else {
-        this.currentBook.id = this.books.length + 1;
-        this.books.push({ ...this.currentBook });
+    getPublisherIdByName(name) {
+      const publisher = this.publishers.find((p) => p.publisherName === name);
+      return publisher ? publisher._id : null;
+    },
+    async handleModalOk() {
+      try {
+        if (this.isEditing) {
+          // Khi cập nhật sách, không gửi `id` và `publisher`, chỉ gửi `publisherId`
+          const { title, author, price, quantity, publishYear, publisherId } =
+            this.currentBook;
+
+          await bookService.update(this.selectedBooks[0].id, {
+            title,
+            author,
+            price,
+            quantity,
+            publishYear,
+            publisherId,
+          });
+
+          // Cập nhật lại danh sách sách sau khi sửa
+          await this.fetchBooks();
+        } else {
+          const createdBook = await bookService.create(this.currentBook);
+          this.books.push({
+            ...createdBook,
+            publisher: this.getPublisherNameById(createdBook.publisherId), // Đổi publisherId sang publisherName để hiển thị
+            price: ToVietnamCurrencyFormat(createdBook.price),
+          });
+        }
+        this.isModalVisible = false;
+      } catch (error) {
+        console.error("Error saving book:", error);
+        alert("Đã xảy ra lỗi khi lưu sách. Vui lòng thử lại.");
       }
-      this.isModalVisible = false;
+    },
+    getPublisherNameById(id) {
+      const publisher = this.publishers.find((p) => p._id === id);
+      return publisher ? publisher.publisherName : "";
     },
     handleModalCancel() {
       this.isModalVisible = false;
@@ -205,6 +343,7 @@ export default {
   },
   async created() {
     await this.fetchBooks();
+    await this.fetchPublishers();
   },
 };
 </script>
