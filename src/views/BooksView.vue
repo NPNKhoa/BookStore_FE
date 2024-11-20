@@ -11,7 +11,7 @@
             class="bg-green-500 px-3 py-2 rounded-md flex items-center gap-1 text-white"
             @click="openAddBookModal"
           >
-            <i class="pi pi-plus-circle"></i> Thêm mới sách
+            <i class="pi pi-plus"></i> Thêm mới sách
           </button>
           <button
             class="bg-blue-500 px-3 py-2 rounded-md flex items-center gap-1 text-white"

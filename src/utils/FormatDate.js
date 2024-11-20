@@ -10,3 +10,17 @@ export default function formatDate(mongoDate) {
 
   return `${day}-${month}-${year}`;
 }
+
+export const convertToISODate = (dateStr) => {
+  const [day, month, year] = dateStr.split("-");
+
+  const isoFormattedDate = `${year}-${month}-${day}`;
+
+  const date = new Date(isoFormattedDate);
+
+  if (isNaN(date.getTime())) {
+    throw new Error(`Invalid date format: ${dateStr}`);
+  }
+
+  return date;
+};

@@ -5,12 +5,21 @@
     <main class="flex-1 p-6 w-full">
       <h1 class="text-2xl font-bold mb-6">Lịch Sử Mượn Sách</h1>
 
-      <button
-        @click="openModal"
-        class="bg-green-500 text-white py-3 px-6 rounded-md ms-auto mb-4 flex justify-between items-center gap-4"
-      >
-        <i class="pi pi-plus"></i> Thuê sách
-      </button>
+      <div class="flex justify-between items-center w-1/4 ms-auto">
+        <button
+          @click="openModal"
+          class="bg-green-500 text-white py-3 px-6 rounded-md ms-auto mb-4 flex justify-between items-center gap-4"
+        >
+          <i class="pi pi-plus"></i> Thuê sách
+        </button>
+
+        <button
+          @click="handleReturnBook"
+          class="bg-blue-500 text-white py-3 px-6 rounded-md ms-auto mb-4 flex justify-between items-center gap-4"
+        >
+          <i class="pi pi-check"></i> Trả sách
+        </button>
+      </div>
 
       <DataTable
         :rows="records"
@@ -19,6 +28,8 @@
         :filterable="true"
         :pagination="true"
         :rowsPerPage="5"
+        :selection="selectedRecords"
+        @update:selection="updateSelection"
       />
 
       <div
@@ -110,7 +121,7 @@
 <script>
 import Sidebar from "@/components/commons/SideBar.vue";
 import DataTable from "@/components/commons/DataTable.vue";
-import formatDate from "@/utils/FormatDate";
+import formatDate, { convertToISODate } from "@/utils/FormatDate";
 import borrowingRecordService from "@/services/borrowingRecord.service";
 import readerService from "@/services/reader.service.js";
 import bookService from "@/services/book.service.js";
@@ -133,6 +144,7 @@ export default {
       readers: [],
       books: [],
       records: [],
+      selectedRecords: [],
       columns: [
         { field: "title", header: "Tên Sách", sortable: true, filter: true },
         { field: "reader", header: "Người Mượn", sortable: true, filter: true },
@@ -154,7 +166,7 @@ export default {
               : "Chưa trả";
 
             return {
-              id: item?.bookId?._id,
+              id: item?._id,
               title: item?.bookId?.title,
               reader: `${item?.readerId?.firstName} ${item?.readerId?.lastName}`,
               price: ToVietnamCurrencyFormat(item?.bookId?.price),
@@ -183,6 +195,37 @@ export default {
         );
       }
     },
+    async handleReturnBook() {
+      if (!this.selectedRecords || this.selectedRecords.length === 0) {
+        alert("Vui lòng chọn ít nhất một sách để trả.");
+        return;
+      }
+
+      const confirmReturn = confirm(
+        `Bạn có chắc chắn muốn trả các sách đã chọn không?`
+      );
+
+      if (!confirmReturn) return;
+
+      try {
+        const promises = this.selectedRecords.map((record) => {
+          console.log(record);
+          const formattedBorrowDate = convertToISODate(record.borrowDate);
+          return borrowingRecordService.update(record.id, {
+            borrowDate: formattedBorrowDate,
+            returnDate: new Date().toISOString(),
+          });
+        });
+
+        await Promise.all(promises);
+
+        alert("Trả sách thành công!");
+        await this.fetchBooks();
+      } catch (error) {
+        console.error("Error returning book:", error);
+        alert("Không thể trả sách. Vui lòng thử lại.");
+      }
+    },
     async handleSubmit() {
       try {
         const payload = {
@@ -191,13 +234,11 @@ export default {
           borrowDate: this.form.borrowDate,
         };
 
-        console.log(this.form);
-
         await borrowingRecordService.create(payload);
 
         alert("Thuê sách thành công!");
         this.closeModal();
-        await this.fetchBooks(); // Cập nhật danh sách mượn sách
+        await this.fetchBooks();
       } catch (error) {
         console.error("Error creating borrowing record:", error);
         alert("Thuê sách thất bại. Vui lòng thử lại.");
@@ -209,6 +250,10 @@ export default {
     closeModal() {
       this.isModalOpen = false;
       this.resetForm();
+    },
+    updateSelection(newSelection) {
+      console.log("Updated selection:", newSelection);
+      this.selectedRecords = newSelection;
     },
     resetForm() {
       this.form = {
