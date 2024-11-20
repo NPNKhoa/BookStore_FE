@@ -2,8 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-@import 'chart.js/dist/Chart.min.css';
-
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

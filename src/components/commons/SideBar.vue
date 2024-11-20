@@ -5,10 +5,10 @@
     <div
       class="text-2xl font-bold mb-4 w-full flex flex-col gap-6 justify-center items-center"
     >
-      <div class="flex justify-between items-center">
+      <router-link :to="'/'" class="flex justify-between items-center">
         <img alt="Vue logo" src="@/assets/logo.svg" class="w-1/4" />
         <h1 class="text-base">Book Management</h1>
-      </div>
+      </router-link>
       <hr class="bg-slate-600 block w-full" />
     </div>
 
@@ -56,6 +56,8 @@ export default {
   methods: {
     signOut() {
       console.log("Sign Out");
+      localStorage.removeItem("token");
+      window.location.href("/login");
     },
     isActive(route) {
       return this.$route.path === route;
