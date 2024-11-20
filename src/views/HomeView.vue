@@ -44,10 +44,10 @@
                 <option value="" disabled>Chọn độc giả</option>
                 <option
                   v-for="reader in readers"
-                  :key="reader.id"
-                  :value="reader.id"
+                  :key="reader._id"
+                  :value="reader._id"
                 >
-                  {{ reader.name }}
+                  {{ reader.firstName + " " + reader.lastName }}
                 </option>
               </select>
             </div>
@@ -63,8 +63,8 @@
                 required
               >
                 <option value="" disabled>Chọn sách</option>
-                <option v-for="book in books" :key="book.id" :value="book.id">
-                  {{ book.name }}
+                <option v-for="book in books" :key="book._id" :value="book._id">
+                  {{ book.title }}
                 </option>
               </select>
             </div>
@@ -112,6 +112,8 @@ import Sidebar from "@/components/commons/SideBar.vue";
 import DataTable from "@/components/commons/DataTable.vue";
 import formatDate from "@/utils/FormatDate";
 import borrowingRecordService from "@/services/borrowingRecord.service";
+import readerService from "@/services/reader.service.js";
+import bookService from "@/services/book.service.js";
 import { ToVietnamCurrencyFormat } from "@/utils/ConvertCurrency";
 
 export default {
@@ -128,11 +130,8 @@ export default {
         book: "",
         borrowDate: "",
       },
-      readers: [
-        { id: 1, name: "Độc giả 1" },
-        { id: 2, name: "Độc giả 2" },
-        { id: 3, name: "Độc giả 3" },
-      ],
+      readers: [],
+      books: [],
       records: [],
       columns: [
         { field: "title", header: "Tên Sách", sortable: true, filter: true },
@@ -147,26 +146,61 @@ export default {
     async fetchBooks() {
       try {
         const response = await borrowingRecordService.getAll();
+        const bookArray = response
+          .filter((item) => item?.bookId && item?.readerId)
+          .map((item) => {
+            const returnDate = formatDate(item?.returnDate)
+              ? formatDate(item?.returnDate)
+              : "Chưa trả";
 
-        const bookArray = response.map((item) => {
-          const returnDate = formatDate(item?.returnDate)
-            ? formatDate(item?.returnDate)
-            : "Chưa trả";
-
-          return {
-            id: item?.bookId?._id,
-            title: item?.bookId?.title,
-            reader: item?.readerId?.lastName,
-            price: ToVietnamCurrencyFormat(item?.bookId?.price),
-            borrowDate: formatDate(item?.borrowDate),
-            returnDate,
-          };
-        });
-
+            return {
+              id: item?.bookId?._id,
+              title: item?.bookId?.title,
+              reader: `${item?.readerId?.firstName} ${item?.readerId?.lastName}`,
+              price: ToVietnamCurrencyFormat(item?.bookId?.price),
+              borrowDate: formatDate(item?.borrowDate),
+              returnDate,
+            };
+          });
         this.records = bookArray;
       } catch (error) {
         console.error("Error fetching books:", error);
         alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
+      }
+    },
+    async fetchReadersAndBooks() {
+      try {
+        const [readers, books] = await Promise.all([
+          readerService.getAll(),
+          bookService.getAll(),
+        ]);
+        this.readers = readers;
+        this.books = books;
+      } catch (error) {
+        console.error("Error fetching readers/books:", error);
+        alert(
+          "Không thể tải thông tin độc giả hoặc sách. Vui lòng thử lại sau."
+        );
+      }
+    },
+    async handleSubmit() {
+      try {
+        const payload = {
+          readerId: this.form.reader,
+          bookId: this.form.book,
+          borrowDate: this.form.borrowDate,
+        };
+
+        console.log(this.form);
+
+        await borrowingRecordService.create(payload);
+
+        alert("Thuê sách thành công!");
+        this.closeModal();
+        await this.fetchBooks(); // Cập nhật danh sách mượn sách
+      } catch (error) {
+        console.error("Error creating borrowing record:", error);
+        alert("Thuê sách thất bại. Vui lòng thử lại.");
       }
     },
     openModal() {
@@ -183,16 +217,9 @@ export default {
         borrowDate: "",
       };
     },
-    handleSubmit() {
-      console.log("Thuê sách:", this.form);
-      alert("Thuê sách thành công!");
-      this.closeModal();
-    },
   },
   async created() {
-    await this.fetchBooks();
+    await Promise.all([this.fetchBooks(), this.fetchReadersAndBooks()]);
   },
 };
 </script>
-
-<style scoped></style>
