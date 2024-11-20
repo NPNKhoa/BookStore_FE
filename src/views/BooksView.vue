@@ -21,7 +21,6 @@
           </button>
         </div>
 
-        <!-- Pass onView and onDelete to DataTable -->
         <DataTable
           :rows="filteredBooks"
           :columns="columns"
@@ -34,64 +33,31 @@
           :onDelete="handleDelete"
         />
 
+        <!-- Modal chi tiết sách -->
         <CustomModal
-          :visible="isModalVisible"
-          :header="modalHeader"
-          :onOk="handleModalOk"
-          :onCancel="handleModalCancel"
-          @update:visible="isModalVisible = $event"
+          :visible="isDetailModalVisible"
+          header="Chi tiết sách"
+          :onCancel="closeDetailModal"
+          @update:visible="isDetailModalVisible = $event"
         >
-          <!-- Nội dung modal -->
-          <form>
-            <div class="mb-4">
-              <label class="block font-medium">Title</label>
-              <input
-                type="text"
-                v-model="currentBook.name"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block font-medium">Price</label>
-              <input
-                type="number"
-                v-model="currentBook.price"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block font-medium">Quantity</label>
-              <input
-                type="number"
-                v-model="currentBook.quantity"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block font-medium">Publish Year</label>
-              <input
-                type="number"
-                v-model="currentBook.publishYear"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block font-medium">Publisher</label>
-              <input
-                type="text"
-                v-model="currentBook.publisher"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-            <div class="mb-4">
-              <label class="block font-medium">Author Name</label>
-              <input
-                type="text"
-                v-model="currentBook.author"
-                class="w-full p-2 border border-gray-300 rounded"
-              />
-            </div>
-          </form>
+          <div class="flex flex-col gap-2 text-xl">
+            <p><strong>Tiêu đề:</strong> {{ detailedBook.title }}</p>
+            <p><strong>Giá:</strong> {{ detailedBook.price }}</p>
+            <p><strong>Số lượng:</strong> {{ detailedBook.quantity }}</p>
+            <p><strong>Năm xuất bản:</strong> {{ detailedBook.publishYear }}</p>
+            <p><strong>Nhà xuất bản:</strong> {{ detailedBook.publisher }}</p>
+            <p><strong>Tác giả:</strong> {{ detailedBook.author }}</p>
+            <p>
+              <strong>Trạng thái: </strong>
+              <span
+                :class="
+                  detailedBook.quantity > 0 ? 'text-green-500' : 'text-red-500'
+                "
+              >
+                {{ detailedBook.quantity > 0 ? "Còn sách" : "Hết sách" }}
+              </span>
+            </p>
+          </div>
         </CustomModal>
       </div>
     </main>
@@ -106,7 +72,7 @@ import { ToVietnamCurrencyFormat } from "@/utils/ConvertCurrency";
 import bookService from "@/services/book.service";
 
 export default {
-  name: "SearchView",
+  name: "BooksView",
   components: {
     DataTable,
     SideBar,
@@ -132,6 +98,8 @@ export default {
       ],
       isModalVisible: false,
       modalHeader: "",
+      isDetailModalVisible: false,
+      detailedBook: {},
       currentBook: this.createEmptyBook(),
       isEditing: false,
     };
@@ -168,23 +136,33 @@ export default {
         alert("Không thể tải danh sách sách. Vui lòng thử lại sau.");
       }
     },
-    updateSelection(selection) {
-      console.log("Selected books in SearchView:", selection);
-      this.selectedBooks = selection;
-    },
     handleView(book) {
-      console.log("View Book:", book);
-      alert(`Xem chi tiết: ${book.name}`);
+      this.fetchBookDetails(book.id);
     },
-    handleDelete(book) {
-      console.log("Delete Book:", book);
-      this.books = this.books.filter((b) => b.id !== book.id);
-      alert(`Xóa sách: ${book.name}`);
+    async fetchBookDetails(id) {
+      try {
+        const book = await bookService.get(id);
+        this.detailedBook = {
+          title: book.title,
+          price: ToVietnamCurrencyFormat(book.price),
+          quantity: book.quantity,
+          publishYear: book.publishYear,
+          publisher: book.publisherId.publisherName,
+          author: book.author,
+        };
+        this.isDetailModalVisible = true;
+      } catch (error) {
+        console.error("Error fetching book details:", error);
+        alert("Không thể xem chi tiết sách. Vui lòng thử lại sau.");
+      }
+    },
+    closeDetailModal() {
+      this.isDetailModalVisible = false;
     },
     createEmptyBook() {
       return {
         id: null,
-        name: "",
+        title: "",
         author: "",
         price: null,
         quantity: null,
@@ -193,6 +171,7 @@ export default {
       };
     },
     openAddBookModal() {
+      console.log("ok");
       this.modalHeader = "Thêm mới sách";
       this.currentBook = this.createEmptyBook();
       this.isEditing = false;
