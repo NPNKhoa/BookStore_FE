@@ -10,11 +10,15 @@
       :striped-rows="true"
       :size="tableSize"
       :selection="selection"
-      selection-mode="checkbox"
+      :selection-mode="selection !== null && 'checkbox'"
       @update:selection="handleSelectionUpdate"
     >
       <!-- Checkbox for selection -->
-      <p-column selection-mode="multiple" headerStyle="width: 3rem"></p-column>
+      <p-column
+        v-if="selection !== null"
+        selection-mode="multiple"
+        headerStyle="width: 3rem"
+      ></p-column>
 
       <!-- Render columns dynamically -->
       <template v-for="column in columns" :key="column.field">
@@ -106,7 +110,7 @@ export default {
     },
     selection: {
       type: Array,
-      required: true, // Thay đổi: yêu cầu cha truyền xuống selection để đồng bộ
+      default: null,
     },
   },
   computed: {

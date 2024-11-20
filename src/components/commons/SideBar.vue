@@ -46,10 +46,10 @@ export default {
   data() {
     return {
       menuItems: [
-        { label: "Home", to: "/", icon: "pi pi-home" },
-        { label: "Search", to: "/search", icon: "pi pi-search" },
-        { label: "Books", to: "/books", icon: "pi pi-book" },
-        { label: "Admin", to: "/admin", icon: "pi pi-cog" },
+        { label: "Trang chủ", to: "/", icon: "pi pi-home" },
+        { label: "Tra cứu sách", to: "/search", icon: "pi pi-search" },
+        { label: "Quản lý sách", to: "/books", icon: "pi pi-book" },
+        { label: "Thống kê", to: "/statistic", icon: "pi pi-chart-line" },
       ],
     };
   },

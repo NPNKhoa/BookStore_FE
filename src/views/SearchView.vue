@@ -4,14 +4,14 @@
 
     <main class="flex-1 p-6">
       <div class="flex flex-col">
-        <h1 class="text-2xl font-bold mb-4">Tìm Kiếm Sách</h1>
+        <h1 class="text-2xl font-bold mb-4">Tra cứu Sách</h1>
 
         <div class="mb-6">
           <input
             v-model="searchQuery"
             @input="onSearch"
             type="text"
-            placeholder="Search"
+            placeholder="Nhập tên sách mà bạn muốn tìm..."
             class="border border-gray-300 rounded p-2 w-full"
           />
         </div>
